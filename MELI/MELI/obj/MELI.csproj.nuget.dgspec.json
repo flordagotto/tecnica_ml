@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\MELI.csproj": {}
+    "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\MELI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\MELI.csproj": {
+    "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\MELI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\MELI.csproj",
+        "projectUniqueName": "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\MELI.csproj",
         "projectName": "MELI",
-        "projectPath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\MELI.csproj",
+        "projectPath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\MELI.csproj",
         "packagesPath": "C:\\Users\\Acer\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\obj\\",
+        "outputPath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Acer\\AppData\\Roaming\\NuGet\\NuGet.Config",

@@ -1,4 +1,5 @@
 ﻿using MELI.Services;
+using MELI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -13,32 +14,41 @@ namespace MELI.Controllers
     [Route("[controller]")]
     public class MercadoLibreProxy : ControllerBase
     {
-        public IConfiguration _configuration;
+        public readonly int Timeout = 10000;
+        public readonly string BaseUrl = "https://api.mercadolibre.com";
+
+        public readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
-        public int Timeout { get; private set; }
-        public string BaseUrl { get; private set; }
+
+        private static List<IControlStrategy> controlStrategies = new List<IControlStrategy>();
         private static Dictionary<string, int> _accesosIpOrigen = new Dictionary<string, int>();
         private static Dictionary<string, int> _accesosUrlDestino = new Dictionary<string, int>();
         private static int _cantidadPeticionesRecibidas = 0;
         private static int _cantidadPeticionesReenviadas = 0;
         private static int _cantidadPeticionesInvalidas = 0;
-        private int _maxIp;
-        private int _maxUrl;
+        private int _maximaCantidadRequestPorIpOrigen;
+        private int _maximaCantidadRequestPorEndpoint;
 
         public MercadoLibreProxy(IConfiguration configuration)
         {
-            Timeout = 100_000;
             _httpClient = new HttpClient(new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPoliceErrors) => { return true; }
             });
-            //this.VerificationServies = new Li>();
-            BaseUrl = "https://api.mercadolibre.com";
             _configuration = configuration;
-            _maxIp = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorIpOrigen").Value);
-            //if maxIp > 0:
-            //        this.VerificationServices.Add(IpVerifactor())
-            _maxUrl = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorEndpointDestino").Value);
+
+            _maximaCantidadRequestPorIpOrigen = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorIpOrigen").Value);
+            _maximaCantidadRequestPorEndpoint = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorEndpointDestino").Value);
+
+            if (_maximaCantidadRequestPorIpOrigen > 0)
+            {
+                controlStrategies.Add(new IpControlStrategy());
+            }
+
+            if (_maximaCantidadRequestPorEndpoint > 0)
+            {
+                controlStrategies.Add(new URLControlStrategy());
+            }
         }
 
         [HttpGet]
@@ -46,39 +56,42 @@ namespace MELI.Controllers
         public async Task<IActionResult> Get(string urlDestino)
         {
             _cantidadPeticionesRecibidas++;
-            //foreach (var verificationServies in collection)
-            //{
+            var ipOrigen = (HttpContext.Connection.RemoteIpAddress).ToString();
 
-            //}
-            if (_maxIp > 0)
+            foreach (var controlStrategy in controlStrategies)
             {
-                var ipOrigen = (HttpContext.Connection.RemoteIpAddress).ToString();
+                controlStrategy.ContarCantidadRequest();
+            }
+
+            if (_maximaCantidadRequestPorIpOrigen > 0)
+            {
+                HttpContext.Connection.
                 ContarCantidadRequest(ipOrigen, _accesosIpOrigen);
-                if(SuperaCantidadRequest(ipOrigen, _accesosUrlDestino, _maxIp))
+                if (SuperaCantidadRequest(ipOrigen, _accesosUrlDestino, _maximaCantidadRequestPorIpOrigen))
                     return BadRequest("Se superaron la cantidad de request permitidas");
             }
 
-            if (_maxUrl > 0)
+            if (_maximaCantidadRequestPorEndpoint > 0)
             {
                 ContarCantidadRequest(urlDestino, _accesosUrlDestino);
-                if(SuperaCantidadRequest(urlDestino, _accesosUrlDestino, _maxUrl))
+                if (SuperaCantidadRequest(urlDestino, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
                     return BadRequest("Se superaron la cantidad de request permitidas");
             }
 
-            var urlBuilder = BaseUrl + "/" + urlDestino;
+            var urlEndpoint = BaseUrl + "/" + urlDestino;
 
             var client = _httpClient;
             using (var request = new HttpRequestMessage())
             {
                 request.Method = new HttpMethod("GET");
-                request.RequestUri = new Uri(urlBuilder.ToString());
+                request.RequestUri = new Uri(urlEndpoint.ToString());
 
                 var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
                 try
                 {
                     if (!response.IsSuccessStatusCode)
                         return BadRequest("Hubo un problema: verifique la URL enviada");
-                    
+
                     var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     _cantidadPeticionesReenviadas++;
                     return Ok(responseText);
@@ -101,8 +114,8 @@ namespace MELI.Controllers
         {
             int cantidadPorIp = EstadisticasUsoService.GetCantidadPeticionesPorParametro(_accesosIpOrigen, ipOrigen);
             decimal requestPorIpSegunTotal = EstadisticasUsoService.GetEstadisticaUsoPorParametroSegunPeticionesRecibidas(cantidadPorIp, _cantidadPeticionesRecibidas);
-            return Ok(  $"La cantidad de peticiones realizadas por la ip de origen {ipOrigen} fue {cantidadPorIp}. " +
-                        $"Representa el {requestPorIpSegunTotal*100}% del total de peticiones recibidas");
+            return Ok($"La cantidad de peticiones realizadas por la ip de origen {ipOrigen} fue {cantidadPorIp}. " +
+                        $"Representa el {requestPorIpSegunTotal * 100}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -127,8 +140,8 @@ namespace MELI.Controllers
         public IActionResult GetEstadisticaUsoPeticionesReenviadasSegunPeticionesRecibidas()
         {
             decimal peticionesReenviadasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesReenviadas, _cantidadPeticionesRecibidas);
-            return Ok(  $"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesReenviadas}. " +
-                        $"Representa el {peticionesReenviadasSegunRecibidas*100}% del total de peticiones recibidas");
+            return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesReenviadas}. " +
+                        $"Representa el {peticionesReenviadasSegunRecibidas * 100}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -138,22 +151,6 @@ namespace MELI.Controllers
             decimal peticionesInvalidasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesInvalidas, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesInvalidas}. " +
                         $"Representa el {peticionesInvalidasSegunRecibidas * 100}% del total de peticiones recibidas");
-        }
-
-
-        private void ContarCantidadRequest(string parametroAControlar, Dictionary<string, int> listaAControlar)
-        {
-            if (listaAControlar.ContainsKey(parametroAControlar))
-                listaAControlar[parametroAControlar] = (listaAControlar[parametroAControlar] + 1);
-            else
-                listaAControlar.Add(parametroAControlar, 1);
-        }
-
-        private bool SuperaCantidadRequest(string parametroAControlar, Dictionary<string, int> listaAControlar, int valorMaximo)
-        {
-            if (listaAControlar.ContainsKey(parametroAControlar) && listaAControlar[parametroAControlar] > valorMaximo)
-                return true;
-            return false;
         }
     }
 }

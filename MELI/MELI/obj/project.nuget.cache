@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KEVv+p3o+hNeUQLTbhbYivBnAEU9IanHwVrgExiCOLOKLwTbJVGPU4/jhQUJnYT7WnSO3IhnjFKdCoM1j1Jewg==",
+  "dgSpecHash": "Ttkv1wo8my5s9lIS1fM6uLjMRAS+ZDVZSnFjzM8dQsbg5oHIC72Z3c8jzI8Lhvi5VG2zCDmoNSuTYXueRtYLAg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\MELI\\MELI\\MELI\\MELI.csproj",
+  "projectFilePath": "C:\\Users\\Acer\\Desktop\\Tecnicas\\Repo mercado libre\\tecnica_ml\\MELI\\MELI\\MELI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Acer\\.nuget\\packages\\aspnetcoreratelimit\\4.0.2\\aspnetcoreratelimit.4.0.2.nupkg.sha512",
     "C:\\Users\\Acer\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
