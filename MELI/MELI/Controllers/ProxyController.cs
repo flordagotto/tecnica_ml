@@ -53,17 +53,18 @@ namespace MELI.Controllers
         {
             _cantidadPeticionesRecibidas++;
             var ipOrigen = (HttpContext.Connection.RemoteIpAddress).ToString();
+            var endpoint = urlDestino.Split('/')[0];
 
             _controlService.ContarCantidadRequest(ipOrigen, _accesosIpOrigen);
-            _controlService.ContarCantidadRequest(urlDestino, _accesosUrlDestino);
+            _controlService.ContarCantidadRequest(endpoint, _accesosUrlDestino);
 
             if (_controlarPorIp && _controlService.SuperaCantidadRequest(ipOrigen, _accesosIpOrigen, _maximaCantidadRequestPorIpOrigen))
             {
                 return BadRequest("Se superó la cantidad de peticiones por ip de origen");
             }
-            if (_controlarPorEndpoint && _controlService.SuperaCantidadRequest(urlDestino, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
+            if (_controlarPorEndpoint && _controlService.SuperaCantidadRequest(endpoint, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
             {
-                return BadRequest($"Se superó la cantidad de peticiones al endpoint {BaseUrl}/{urlDestino}");
+                return BadRequest($"Se superó la cantidad de peticiones al endpoint {BaseUrl}/{endpoint}");
             }
 
             var urlEndpoint = $"{BaseUrl}/{urlDestino}";
