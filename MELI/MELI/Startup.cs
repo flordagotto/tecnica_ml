@@ -1,4 +1,6 @@
 using AspNetCoreRateLimit;
+using MELI.Services;
+using MELI.Services.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -52,6 +54,8 @@ namespace MELI
 
             // configuration (resolvers, counter key builders)
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+            services.AddTransient<IControlDePeticionesService, ControlDePeticionesService>();
+            services.AddTransient<IEstadisticasUsoService, EstadisticasUsoService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

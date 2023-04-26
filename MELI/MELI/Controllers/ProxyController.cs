@@ -16,39 +16,35 @@ namespace MELI.Controllers
     {
         public readonly int Timeout = 10000;
         public readonly string BaseUrl = "https://api.mercadolibre.com";
+        private readonly int _maximaCantidadRequestPorIpOrigen;
+        private readonly int _maximaCantidadRequestPorEndpoint;
+        private readonly bool _controlarPorIp;
+        private readonly bool _controlarPorEndpoint;
 
         public readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
+        private readonly IControlDePeticionesService _controlService;
+        private readonly IEstadisticasUsoService _estadisticasService;
 
-        private static List<IControlStrategy> controlStrategies = new List<IControlStrategy>();
         private static Dictionary<string, int> _accesosIpOrigen = new Dictionary<string, int>();
         private static Dictionary<string, int> _accesosUrlDestino = new Dictionary<string, int>();
         private static int _cantidadPeticionesRecibidas = 0;
         private static int _cantidadPeticionesReenviadas = 0;
         private static int _cantidadPeticionesInvalidas = 0;
-        private int _maximaCantidadRequestPorIpOrigen;
-        private int _maximaCantidadRequestPorEndpoint;
 
-        public MercadoLibreProxy(IConfiguration configuration)
+        public MercadoLibreProxy(IConfiguration configuration, IControlDePeticionesService controlService, IEstadisticasUsoService estadisticasService)
         {
             _httpClient = new HttpClient(new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPoliceErrors) => { return true; }
             });
             _configuration = configuration;
-
+            _controlService = controlService;
+            _estadisticasService = estadisticasService;
             _maximaCantidadRequestPorIpOrigen = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorIpOrigen").Value);
             _maximaCantidadRequestPorEndpoint = Convert.ToInt32(_configuration.GetSection("MaxPeticionesPorEndpointDestino").Value);
-
-            if (_maximaCantidadRequestPorIpOrigen > 0)
-            {
-                controlStrategies.Add(new IpControlStrategy(_maximaCantidadRequestPorIpOrigen));
-            }
-
-            if (_maximaCantidadRequestPorEndpoint > 0)
-            {
-                controlStrategies.Add(new URLControlStrategy(_maximaCantidadRequestPorEndpoint));
-            }
+            _controlarPorIp = _maximaCantidadRequestPorIpOrigen > 0;
+            _controlarPorEndpoint = _maximaCantidadRequestPorEndpoint > 0;
         }
 
         [HttpGet]
@@ -58,9 +54,16 @@ namespace MELI.Controllers
             _cantidadPeticionesRecibidas++;
             var ipOrigen = (HttpContext.Connection.RemoteIpAddress).ToString();
 
-            foreach (var controlStrategy in controlStrategies)
+            _controlService.ContarCantidadRequest(ipOrigen, _accesosIpOrigen);
+            _controlService.ContarCantidadRequest(urlDestino, _accesosUrlDestino);
+
+            if (_controlarPorIp && _controlService.SuperaCantidadRequest(ipOrigen, _accesosIpOrigen, _maximaCantidadRequestPorIpOrigen))
             {
-                //controlStrategy.ContarCantidadRequest();
+                return BadRequest("Se superó la cantidad de peticiones por ip de origen");
+            }
+            if (_controlarPorEndpoint && _controlService.SuperaCantidadRequest(urlDestino, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
+            {
+                return BadRequest($"Se superó la cantidad de peticiones al endpoint {BaseUrl}/{urlDestino}");
             }
 
             var urlEndpoint = $"{BaseUrl}/{urlDestino}";
@@ -95,20 +98,20 @@ namespace MELI.Controllers
         [Route("EstadisticaUsoPorIp")]
         public IActionResult GetEstadisticaUsoPorIpSegunPeticionesRecibidas(string ipOrigen)
         {
-            int cantidadPorIp = EstadisticasUsoService.GetCantidadPeticionesPorParametro(_accesosIpOrigen, ipOrigen);
-            decimal requestPorIpSegunTotal = EstadisticasUsoService.GetEstadisticaUsoPorParametroSegunPeticionesRecibidas(cantidadPorIp, _cantidadPeticionesRecibidas);
+            int cantidadPorIp = _estadisticasService.GetCantidadPeticionesPorParametro(_accesosIpOrigen, ipOrigen);
+            decimal porcentajeRequestPorIpSegunTotal = _estadisticasService.GetPorcentajeSobreTotal(cantidadPorIp, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones realizadas por la ip de origen {ipOrigen} fue {cantidadPorIp}. " +
-                        $"Representa el {EstadisticasUsoService.GetPorcentaje(requestPorIpSegunTotal)}% del total de peticiones recibidas");
+                        $"Representa el {porcentajeRequestPorIpSegunTotal}% del total de peticiones recibidas");
         }
 
         [HttpGet]
         [Route("EstadisticaUsoPorEndpoint")]
         public IActionResult GetEstadisticaUsoPorUrlDestinoSegunPeticionesRecibidas(string urlDestino)
         {
-            int cantidadPorEndpoint = EstadisticasUsoService.GetCantidadPeticionesPorParametro(_accesosUrlDestino, urlDestino);
-            decimal requestPorEndpointSegunTotal = EstadisticasUsoService.GetEstadisticaUsoPorParametroSegunPeticionesRecibidas(cantidadPorEndpoint, _cantidadPeticionesRecibidas);
+            int cantidadPorEndpoint = _estadisticasService.GetCantidadPeticionesPorParametro(_accesosUrlDestino, urlDestino);
+            decimal porcentajeRequestPorEndpointSegunTotal = _estadisticasService.GetPorcentajeSobreTotal(cantidadPorEndpoint, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones realizadas al endpoint destino {BaseUrl}/{urlDestino} fue {cantidadPorEndpoint}. " +
-                        $"Representa el {EstadisticasUsoService.GetPorcentaje(requestPorEndpointSegunTotal)}% del total de peticiones recibidas");
+                        $"Representa el {porcentajeRequestPorEndpointSegunTotal}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -122,18 +125,18 @@ namespace MELI.Controllers
         [Route("EstadisticaUsoCorrecto")]
         public IActionResult GetEstadisticaUsoPeticionesReenviadasSegunPeticionesRecibidas()
         {
-            decimal peticionesReenviadasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesReenviadas, _cantidadPeticionesRecibidas);
+            decimal porcentajePeticionesReenviadasSegunRecibidas = _estadisticasService.GetPorcentajeSobreTotal(_cantidadPeticionesReenviadas, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesReenviadas}. " +
-                        $"Representa el {EstadisticasUsoService.GetPorcentaje(peticionesReenviadasSegunRecibidas)}% del total de peticiones recibidas");
+                        $"Representa el {porcentajePeticionesReenviadasSegunRecibidas}% del total de peticiones recibidas");
         }
 
         [HttpGet]
         [Route("EstadisticaUsoInvalido")]
         public IActionResult GetEstadisticaUsoPeticionesInvalidasSegunPeticionesRecibidas()
         {
-            decimal peticionesInvalidasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesInvalidas, _cantidadPeticionesRecibidas);
+            decimal porcentajePeticionesInvalidasSegunRecibidas = _estadisticasService.GetPorcentajeSobreTotal(_cantidadPeticionesInvalidas, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesInvalidas}. " +
-                        $"Representa el {EstadisticasUsoService.GetPorcentaje(peticionesInvalidasSegunRecibidas)}% del total de peticiones recibidas");
+                        $"Representa el {porcentajePeticionesInvalidasSegunRecibidas}% del total de peticiones recibidas");
         }
     }
 }
