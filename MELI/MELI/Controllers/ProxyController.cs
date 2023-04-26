@@ -42,12 +42,12 @@ namespace MELI.Controllers
 
             if (_maximaCantidadRequestPorIpOrigen > 0)
             {
-                controlStrategies.Add(new IpControlStrategy());
+                controlStrategies.Add(new IpControlStrategy(_maximaCantidadRequestPorIpOrigen));
             }
 
             if (_maximaCantidadRequestPorEndpoint > 0)
             {
-                controlStrategies.Add(new URLControlStrategy());
+                controlStrategies.Add(new URLControlStrategy(_maximaCantidadRequestPorEndpoint));
             }
         }
 
