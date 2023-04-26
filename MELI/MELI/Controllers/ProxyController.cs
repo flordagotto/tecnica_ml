@@ -60,7 +60,7 @@ namespace MELI.Controllers
 
             foreach (var controlStrategy in controlStrategies)
             {
-                controlStrategy.ContarCantidadRequest();
+                //controlStrategy.ContarCantidadRequest();
             }
 
             var urlEndpoint = $"{BaseUrl}/{urlDestino}";
