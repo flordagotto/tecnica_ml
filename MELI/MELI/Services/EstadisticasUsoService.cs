@@ -19,5 +19,9 @@ namespace MELI.Services
             return peticionesEnCondicionSegunRecibidas;
         }
 
+        public static decimal GetPorcentaje(decimal value)
+        {
+            return value * 100;
+        }
     }
 }

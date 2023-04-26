@@ -63,43 +63,26 @@ namespace MELI.Controllers
                 controlStrategy.ContarCantidadRequest();
             }
 
-            if (_maximaCantidadRequestPorIpOrigen > 0)
-            {
-                HttpContext.Connection.
-                ContarCantidadRequest(ipOrigen, _accesosIpOrigen);
-                if (SuperaCantidadRequest(ipOrigen, _accesosUrlDestino, _maximaCantidadRequestPorIpOrigen))
-                    return BadRequest("Se superaron la cantidad de request permitidas");
-            }
+            var urlEndpoint = $"{BaseUrl}/{urlDestino}";
 
-            if (_maximaCantidadRequestPorEndpoint > 0)
-            {
-                ContarCantidadRequest(urlDestino, _accesosUrlDestino);
-                if (SuperaCantidadRequest(urlDestino, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
-                    return BadRequest("Se superaron la cantidad de request permitidas");
-            }
-
-            var urlEndpoint = BaseUrl + "/" + urlDestino;
-
-            var client = _httpClient;
             using (var request = new HttpRequestMessage())
             {
                 request.Method = new HttpMethod("GET");
                 request.RequestUri = new Uri(urlEndpoint.ToString());
 
-                var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
+
                 try
                 {
                     if (!response.IsSuccessStatusCode)
+                    {
+                        _cantidadPeticionesInvalidas++;
                         return BadRequest("Hubo un problema: verifique la URL enviada");
+                    }
 
                     var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     _cantidadPeticionesReenviadas++;
                     return Ok(responseText);
-                }
-                catch (Exception ex)
-                {
-                    _cantidadPeticionesInvalidas++;
-                    return BadRequest(ex);
                 }
                 finally
                 {
@@ -115,7 +98,7 @@ namespace MELI.Controllers
             int cantidadPorIp = EstadisticasUsoService.GetCantidadPeticionesPorParametro(_accesosIpOrigen, ipOrigen);
             decimal requestPorIpSegunTotal = EstadisticasUsoService.GetEstadisticaUsoPorParametroSegunPeticionesRecibidas(cantidadPorIp, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones realizadas por la ip de origen {ipOrigen} fue {cantidadPorIp}. " +
-                        $"Representa el {requestPorIpSegunTotal * 100}% del total de peticiones recibidas");
+                        $"Representa el {EstadisticasUsoService.GetPorcentaje(requestPorIpSegunTotal)}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -125,7 +108,7 @@ namespace MELI.Controllers
             int cantidadPorEndpoint = EstadisticasUsoService.GetCantidadPeticionesPorParametro(_accesosUrlDestino, urlDestino);
             decimal requestPorEndpointSegunTotal = EstadisticasUsoService.GetEstadisticaUsoPorParametroSegunPeticionesRecibidas(cantidadPorEndpoint, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones realizadas al endpoint destino {BaseUrl}/{urlDestino} fue {cantidadPorEndpoint}. " +
-                        $"Representa el {requestPorEndpointSegunTotal * 100}% del total de peticiones recibidas");
+                        $"Representa el {EstadisticasUsoService.GetPorcentaje(requestPorEndpointSegunTotal)}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -141,7 +124,7 @@ namespace MELI.Controllers
         {
             decimal peticionesReenviadasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesReenviadas, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesReenviadas}. " +
-                        $"Representa el {peticionesReenviadasSegunRecibidas * 100}% del total de peticiones recibidas");
+                        $"Representa el {EstadisticasUsoService.GetPorcentaje(peticionesReenviadasSegunRecibidas)}% del total de peticiones recibidas");
         }
 
         [HttpGet]
@@ -150,7 +133,7 @@ namespace MELI.Controllers
         {
             decimal peticionesInvalidasSegunRecibidas = EstadisticasUsoService.GetEstadisticaUsoPeticionesEnCondicionSegunPeticionesRecibidas(_cantidadPeticionesInvalidas, _cantidadPeticionesRecibidas);
             return Ok($"La cantidad de peticiones reenviadas a la api de mercado libre correctamente fue {_cantidadPeticionesInvalidas}. " +
-                        $"Representa el {peticionesInvalidasSegunRecibidas * 100}% del total de peticiones recibidas");
+                        $"Representa el {EstadisticasUsoService.GetPorcentaje(peticionesInvalidasSegunRecibidas)}% del total de peticiones recibidas");
         }
     }
 }

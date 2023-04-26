@@ -5,6 +5,13 @@ namespace MELI.Services
 {
     public class URLControlStrategy : IControlStrategy
     {
+        public readonly int ValorMaximo;
+
+        public URLControlStrategy (int valorMaximo)
+        {
+            ValorMaximo = valorMaximo;
+        }
+
         public void ContarCantidadRequest(string parametroAControlar, Dictionary<string, int> diccionarioAControlar)
         {
             if (diccionarioAControlar.ContainsKey(parametroAControlar))
@@ -13,7 +20,7 @@ namespace MELI.Services
                 diccionarioAControlar.Add(parametroAControlar, 1);
         }
 
-        public bool SuperaCantidadRequest(string parametroAControlar, Dictionary<string, int> diccionarioAControlar, int valorMaximoPermitido)
-            => (diccionarioAControlar.ContainsKey(parametroAControlar) && diccionarioAControlar[parametroAControlar] > valorMaximoPermitido);
+        public bool SuperaCantidadRequest(string parametroAControlar, Dictionary<string, int> diccionarioAControlar)
+            => (diccionarioAControlar.ContainsKey(parametroAControlar) && diccionarioAControlar[parametroAControlar] > ValorMaximo);
     }
 }
