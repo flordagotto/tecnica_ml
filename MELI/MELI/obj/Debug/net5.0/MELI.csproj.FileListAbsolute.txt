@@ -96,3 +96,13 @@ C:\Users\Acer\Desktop\Tecnicas\Repo mercado libre\tecnica_ml\MELI\MELI\obj\Debug
 C:\Users\Acer\Desktop\Tecnicas\Repo mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.pdb
 C:\Users\Acer\Desktop\Tecnicas\Repo mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.genruntimeconfig.cache
 C:\Users\Acer\Desktop\Tecnicas\Repo mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\ref\MELI.dll
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.csproj.AssemblyReference.cache
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.AssemblyInfoInputs.cache
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.AssemblyInfo.cs
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.csproj.CoreCompileInputs.cache
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.dll
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\refint\MELI.dll
+C:\Users\flor\Desktop\Tecnicas\Mercado libre\tecnica_ml\MELI\MELI\obj\Debug\net5.0\MELI.pdb
