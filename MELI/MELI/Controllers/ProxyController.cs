@@ -14,8 +14,6 @@ namespace MELI.Controllers
     [Route("[controller]")]
     public class MercadoLibreProxy : ControllerBase
     {
-        public readonly int Timeout = 10000;
-        public readonly string BaseUrl = "https://api.mercadolibre.com";
         private readonly int _maximaCantidadRequestPorIpOrigen;
         private readonly int _maximaCantidadRequestPorEndpoint;
         private readonly bool _controlarPorIp;
@@ -58,41 +56,39 @@ namespace MELI.Controllers
             _controlService.ContarCantidadRequest(ipOrigen, _accesosIpOrigen);
             _controlService.ContarCantidadRequest(endpoint, _accesosUrlDestino);
 
-            if (_controlarPorIp && _controlService.SuperaCantidadRequest(ipOrigen, _accesosIpOrigen, _maximaCantidadRequestPorIpOrigen))
-            {
-                return BadRequest("Se superó la cantidad de peticiones por ip de origen");
-            }
-            if (_controlarPorEndpoint && _controlService.SuperaCantidadRequest(endpoint, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
-            {
-                return BadRequest($"Se superó la cantidad de peticiones al endpoint {BaseUrl}/{endpoint}");
-            }
+            //if (_controlarPorIp && _controlService.SuperaCantidadRequest(ipOrigen, _accesosIpOrigen, _maximaCantidadRequestPorIpOrigen))
+            //{
+            //    return BadRequest("Se superó la cantidad de peticiones por ip de origen");
+            //}
+            //if (_controlarPorEndpoint && _controlService.SuperaCantidadRequest(endpoint, _accesosUrlDestino, _maximaCantidadRequestPorEndpoint))
+            //{
+            //    return BadRequest($"Se superó la cantidad de peticiones al endpoint {BaseUrl}/{endpoint}");
+            //}
 
-            var urlEndpoint = $"{BaseUrl}/{urlDestino}";
+            //using (var request = new HttpRequestMessage())
+            //{
+            //    request.Method = new HttpMethod("GET");
+            //    request.RequestUri = new Uri(urlEndpoint.ToString());
 
-            using (var request = new HttpRequestMessage())
-            {
-                request.Method = new HttpMethod("GET");
-                request.RequestUri = new Uri(urlEndpoint.ToString());
+            //    var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
 
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).ConfigureAwait(false);
+            //    try
+            //    {
+            //        if (!response.IsSuccessStatusCode)
+            //        {
+            //            _cantidadPeticionesInvalidas++;
+            //            return BadRequest("Hubo un problema: verifique la URL enviada");
+            //        }
 
-                try
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        _cantidadPeticionesInvalidas++;
-                        return BadRequest("Hubo un problema: verifique la URL enviada");
-                    }
-
-                    var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    _cantidadPeticionesReenviadas++;
-                    return Ok(responseText);
-                }
-                finally
-                {
-                    response.Dispose();
-                }
-            }
+            //        var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            //        _cantidadPeticionesReenviadas++;
+            //        return Ok(responseText);
+            //    }
+            //    finally
+            //    {
+            //        response.Dispose();
+            //    }
+            //}
         }
 
         [HttpGet]
